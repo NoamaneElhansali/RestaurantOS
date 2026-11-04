@@ -64,6 +64,8 @@ jobs:
           tools: composer:v2
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: vendor/bin/pint --test
+      # CI injects all APP/DB variables; the empty ignored file avoids phpdotenv read warnings.
+      - run: touch .env
       - run: php artisan migrate --force
       - run: php artisan test --display-warnings --fail-on-warning
 
