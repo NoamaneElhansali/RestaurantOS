@@ -16,6 +16,12 @@ class IdentityAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_anonymous_api_clients_never_receive_a_web_login_redirect(): void
+    {
+        $this->get('/api/v1/auth/me')->assertUnauthorized();
+        $this->getJson('/api/v1/auth/me')->assertUnauthorized();
+    }
+
     public function test_registration_is_verified_by_email_and_uses_a_session(): void
     {
         Notification::fake();

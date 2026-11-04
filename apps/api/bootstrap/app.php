@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        // API clients must receive 401 JSON even without Accept: application/json.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/login');
         $middleware->alias([
             'tenant' => ResolveRestaurantTenant::class,
             'session.version' => ValidateSessionVersion::class,
