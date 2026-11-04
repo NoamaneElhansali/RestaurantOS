@@ -24,7 +24,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/auth/email/verification-notification', [EmailVerificationController::class, 'resend'])->middleware('throttle:6,1');
             Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
-            Route::middleware('verified')->group(function (): void {
+            Route::middleware('verified.api')->group(function (): void {
                 Route::get('/restaurants', [RestaurantController::class, 'index']);
                 Route::post('/restaurants', [RestaurantController::class, 'store']);
                 Route::get('/restaurants/active', [RestaurantController::class, 'active']);

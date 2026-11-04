@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ResolveRestaurantTenant;
+use App\Http\Middleware\RequireVerifiedEmail;
 use App\Http\Middleware\ValidateSessionVersion;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/login');
         $middleware->alias([
             'tenant' => ResolveRestaurantTenant::class,
+            'verified.api' => RequireVerifiedEmail::class,
             'session.version' => ValidateSessionVersion::class,
         ]);
     })

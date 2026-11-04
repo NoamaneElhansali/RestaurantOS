@@ -37,6 +37,7 @@ class IdentityAuthenticationTest extends TestCase
         Notification::assertSentTo($user, VerifyEmail::class);
         $this->getJson('/api/v1/auth/me')->assertOk()->assertJsonPath('user.id', $user->id);
         $this->getJson('/api/v1/restaurants')->assertForbidden();
+        $this->get('/api/v1/restaurants')->assertForbidden();
     }
 
     public function test_duplicate_email_and_weak_password_are_rejected(): void
