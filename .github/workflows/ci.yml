@@ -129,3 +129,11 @@ jobs:
           echo 'WEB_LOCK_BEGIN'
           base64 -w0 package-lock.json | fold -w 120 | sed 's/^/WEBLOCKCHUNK:/'
           echo 'WEB_LOCK_END'
+
+  phase2-compose-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Real browser-session, CSRF and identity smoke
+        run: bash tools/tests/phase2-compose-smoke.sh
