@@ -72,3 +72,19 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+.auth-input {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  min-height: 2.8rem;
+  border: 1px solid var(--color-rs-input-border);
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  background: white;
+  color: var(--color-rs-ink);
+}
+.auth-input:focus-visible {
+  outline: 3px solid var(--color-rs-gold);
+  outline-offset: 2px;
+}

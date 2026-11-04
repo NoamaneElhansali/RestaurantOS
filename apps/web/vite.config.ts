@@ -21,7 +21,7 @@ export default defineConfig({
   },
   test: {
     // Node-native health tests run with npm run test:offline, not jsdom/Vitest.
-    include: ['src/tests/**/*.test.tsx'],
+    include: ['src/tests/**/*.test.ts', 'src/tests/**/*.test.tsx'],
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
     css: true,

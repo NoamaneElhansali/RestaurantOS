@@ -1,11 +1,16 @@
 import { ArrowUpRight, ChefHat, Globe2, ShieldCheck, Sparkles } from 'lucide-react';
+import type { PropsWithChildren } from 'react';
+import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider, RequireAuth } from './auth/AuthProvider';
+import { AuthPage, VerifyEmailPage } from './pages/AuthPages';
+import { Dashboard } from './pages/Dashboard';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { StatusPanel } from './components/StatusPanel';
 import { setLanguage, supportedLanguages, type Language } from './i18n';
 import { getApiHealth } from './lib/health';
 
-export function App() {
+export function HomePage() {
   const { t, i18n } = useTranslation();
   const health = useQuery({
     queryKey: ['api-health', 'v1'],
@@ -50,6 +55,7 @@ export function App() {
             <p className="mt-8 text-sm font-semibold tracking-widest text-rs-gold-label uppercase">{t('product')}</p>
             <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[1.1] tracking-[-0.055em] sm:text-6xl lg:text-[4.8rem]">{t('headline')}</h1>
             <p className="mt-7 max-w-xl text-lg leading-relaxed text-rs-secondary">{t('subtitle')}</p>
+            <div className="mt-8 flex flex-wrap gap-3"><Link to="/login" className="rounded-xl bg-rs-forest px-5 py-3 font-semibold text-white">Sign in</Link><Link to="/register" className="rounded-xl border border-rs-border px-5 py-3 font-semibold">Create account</Link></div>
             <div className="mt-9 border-s-2 border-rs-gold ps-5">
               <p className="text-xs font-semibold uppercase tracking-[0.17em] text-rs-gold-muted-2">{t('next')}</p>
               <p className="mt-2 text-sm font-medium leading-relaxed text-rs-detail">{t('planned')} <ArrowUpRight size={14} className="inline" aria-hidden="true" /></p>
@@ -64,5 +70,40 @@ export function App() {
         </footer>
       </div>
     </div>
+  );
+}
+
+function WorkspaceShell({ children }: PropsWithChildren) {
+  const { t, i18n } = useTranslation();
+  return <div className="min-h-screen bg-rs-canvas text-rs-ink">
+    <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 border-b border-rs-border px-5 py-5">
+      <Link to="/" className="text-xl font-bold tracking-tight">RestaurantOS</Link>
+      <div className="flex items-center gap-2">
+        <label htmlFor="workspace-language" className="text-sm">{t('lang')}</label>
+        <select id="workspace-language" value={i18n.language} onChange={(event) => void setLanguage(event.target.value as Language)} className="rounded-lg border border-rs-input-border bg-white px-3 py-2 text-sm focus-visible:outline-3 focus-visible:outline-rs-gold">
+          {supportedLanguages.map((language) => <option key={language} value={language}>{language === 'ar' ? 'العربية' : language === 'fr' ? 'Français' : 'English'}</option>)}
+        </select>
+      </div>
+    </header>
+    {children}
+  </div>;
+}
+
+export function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<WorkspaceShell><AuthPage mode="login" /></WorkspaceShell>} />
+          <Route path="/register" element={<WorkspaceShell><AuthPage mode="register" /></WorkspaceShell>} />
+          <Route path="/forgot-password" element={<WorkspaceShell><AuthPage mode="forgot" /></WorkspaceShell>} />
+          <Route path="/reset-password" element={<WorkspaceShell><AuthPage mode="reset" /></WorkspaceShell>} />
+          <Route path="/verify-email" element={<WorkspaceShell><VerifyEmailPage /></WorkspaceShell>} />
+          <Route path="/dashboard" element={<WorkspaceShell><RequireAuth><Dashboard /></RequireAuth></WorkspaceShell>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

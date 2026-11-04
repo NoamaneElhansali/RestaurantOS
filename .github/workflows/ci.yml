@@ -18,10 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # Lockfiles cannot be generated in the current offline environment.
-      # Workaround for npm Arborist's known optional-peer edgesOut crash.
-      # Remove after a compatible lockfile and clean npm ci are verified.
-      - run: npm install --legacy-peer-deps --no-audit --no-fund
+      - run: npm ci --legacy-peer-deps --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
@@ -67,8 +64,10 @@ jobs:
           tools: composer:v2
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: vendor/bin/pint --test
+      # CI injects all APP/DB variables; the empty ignored file avoids phpdotenv read warnings.
+      - run: touch .env
       - run: php artisan migrate --force
-      - run: php artisan test
+      - run: php artisan test --display-warnings --fail-on-warning
 
   offline:
     runs-on: ubuntu-latest
@@ -87,26 +86,12 @@ jobs:
       - name: Verify full Compose stack and database outage recovery
         run: bash tools/tests/phase1-compose-smoke.sh
 
-  composer-lock-export:
+
+
+  phase2-compose-smoke:
     runs-on: ubuntu-latest
-    # Temporary, read-only transfer of dependency metadata for lockfile commit.
-    # Remove after the lockfile is committed.
-    defaults:
-      run:
-        working-directory: apps/api
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, pdo_pgsql, pgsql, dom, xml, curl
-          coverage: none
-          tools: composer:v2
-      - name: Resolve public package metadata
-        run: composer update --no-install --no-interaction --prefer-dist --no-progress
-      - name: Export composer.lock in bounded log lines for review and commit
-        run: |
-          test -s composer.lock
-          printf 'LOCK_TRANSFER_BEGIN\\n'
-          base64 -w0 composer.lock | fold -w 120 | sed 's/^/LOCKCHUNK:/'
-          printf '\\nLOCK_TRANSFER_END\\n'
+      - name: Real browser-session, CSRF and identity smoke
+        run: bash tools/tests/phase2-compose-smoke.sh
