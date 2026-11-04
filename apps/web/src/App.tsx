@@ -1,4 +1,5 @@
 import { ArrowUpRight, ChefHat, Globe2, ShieldCheck, Sparkles } from 'lucide-react';
+import type { PropsWithChildren } from 'react';
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, RequireAuth } from './auth/AuthProvider';
 import { AuthPage, VerifyEmailPage } from './pages/AuthPages';
@@ -72,18 +73,34 @@ export function HomePage() {
   );
 }
 
+function WorkspaceShell({ children }: PropsWithChildren) {
+  const { t, i18n } = useTranslation();
+  return <div className="min-h-screen bg-rs-canvas text-rs-ink">
+    <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 border-b border-rs-border px-5 py-5">
+      <Link to="/" className="text-xl font-bold tracking-tight">RestaurantOS</Link>
+      <div className="flex items-center gap-2">
+        <label htmlFor="workspace-language" className="text-sm">{t('lang')}</label>
+        <select id="workspace-language" value={i18n.language} onChange={(event) => void setLanguage(event.target.value as Language)} className="rounded-lg border border-rs-input-border bg-white px-3 py-2 text-sm focus-visible:outline-3 focus-visible:outline-rs-gold">
+          {supportedLanguages.map((language) => <option key={language} value={language}>{language === 'ar' ? 'العربية' : language === 'fr' ? 'Français' : 'English'}</option>)}
+        </select>
+      </div>
+    </header>
+    {children}
+  </div>;
+}
+
 export function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<AuthPage mode="login" />} />
-          <Route path="/register" element={<AuthPage mode="register" />} />
-          <Route path="/forgot-password" element={<AuthPage mode="forgot" />} />
-          <Route path="/reset-password" element={<AuthPage mode="reset" />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+          <Route path="/login" element={<WorkspaceShell><AuthPage mode="login" /></WorkspaceShell>} />
+          <Route path="/register" element={<WorkspaceShell><AuthPage mode="register" /></WorkspaceShell>} />
+          <Route path="/forgot-password" element={<WorkspaceShell><AuthPage mode="forgot" /></WorkspaceShell>} />
+          <Route path="/reset-password" element={<WorkspaceShell><AuthPage mode="reset" /></WorkspaceShell>} />
+          <Route path="/verify-email" element={<WorkspaceShell><VerifyEmailPage /></WorkspaceShell>} />
+          <Route path="/dashboard" element={<WorkspaceShell><RequireAuth><Dashboard /></RequireAuth></WorkspaceShell>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
