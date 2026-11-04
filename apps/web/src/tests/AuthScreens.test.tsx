@@ -1,12 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from '../i18n';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider, RequireAuth } from '../auth/AuthProvider';
 import { AuthPage } from '../pages/AuthPages';
 import { Dashboard } from '../pages/Dashboard';
 
-afterEach(() => vi.unstubAllGlobals());
+beforeEach(async () => { await i18n.changeLanguage('en'); });
+afterEach(() => { vi.unstubAllGlobals(); void i18n.changeLanguage('fr'); });
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
