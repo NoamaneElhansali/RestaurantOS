@@ -19,7 +19,9 @@ jobs:
         with:
           node-version: '22'
       # Lockfiles cannot be generated in the current offline environment.
-      - run: npm install --no-audit --no-fund
+      # Workaround for npm Arborist's known optional-peer edgesOut crash.
+      # Remove after a compatible lockfile and clean npm ci are verified.
+      - run: npm install --legacy-peer-deps --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
