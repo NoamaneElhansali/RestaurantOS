@@ -36,7 +36,8 @@ class RestaurantMemberController extends Controller
             'email' => ['required', 'email:rfc', 'exists:users,email'],
             'role' => ['required', Rule::enum(RestaurantRole::class)],
         ]);
-        $user = User::query()->where('email', $data['email'])->firstOrFail();
+        $user = User::query()->where('email', $data['email'])
+            ->whereNotNull('email_verified_at')->firstOrFail();
 
         $member = $restaurant->memberships()->firstOrCreate(
             ['user_id' => $user->getKey()],
@@ -52,11 +53,10 @@ class RestaurantMemberController extends Controller
     public function update(Request $request, string $restaurant, string $member): JsonResponse
     {
         $tenant = $this->tenant($request);
-        Gate::authorize('manageMembers', $tenant);
-
         $data = $request->validate(['role' => ['required', Rule::enum(RestaurantRole::class)]]);
         $updated = DB::transaction(function () use ($tenant, $member, $data): RestaurantMembership {
             Restaurant::query()->whereKey($tenant->getKey())->lockForUpdate()->firstOrFail();
+            Gate::authorize('manageMembers', $tenant);
             $membership = $tenant->memberships()->whereKey($member)->firstOrFail();
             $newRole = RestaurantRole::from($data['role']);
             if ($membership->role === RestaurantRole::Owner && $newRole !== RestaurantRole::Owner) {
@@ -73,10 +73,9 @@ class RestaurantMemberController extends Controller
     public function destroy(Request $request, string $restaurant, string $member): JsonResponse
     {
         $tenant = $this->tenant($request);
-        Gate::authorize('manageMembers', $tenant);
-
         DB::transaction(function () use ($tenant, $member): void {
             Restaurant::query()->whereKey($tenant->getKey())->lockForUpdate()->firstOrFail();
+            Gate::authorize('manageMembers', $tenant);
             $membership = $tenant->memberships()->whereKey($member)->firstOrFail();
             if ($membership->role === RestaurantRole::Owner) {
                 $this->assertAnotherOwner($tenant, $membership);
@@ -90,7 +89,7 @@ class RestaurantMemberController extends Controller
     private function assertAnotherOwner(Restaurant $restaurant, RestaurantMembership $member): void
     {
         if (! $restaurant->memberships()->where('role', RestaurantRole::Owner->value)
-            ->whereKeyNot($member->getKey())->exists()) {
+            ->where('id', '!=', $member->getKey())->exists()) {
             throw ValidationException::withMessages(['role' => ['The restaurant must retain an owner.']]);
         }
     }

@@ -3,12 +3,16 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class RestaurantRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->isMethod('post') || (
+            $this->attributes->has('tenant_restaurant')
+            && Gate::allows('update', $this->attributes->get('tenant_restaurant'))
+        );
     }
 
     public function rules(): array
