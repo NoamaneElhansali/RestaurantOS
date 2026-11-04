@@ -1,56 +1,68 @@
 # RestaurantOS
 
-RestaurantOS is a multi-tenant QR menu SaaS **under development** for restaurants and cafés in Morocco. This repository contains the **Phase 1 / Foundation** implementation, not a deployed or production-ready product.
+RestaurantOS is a restaurant management SaaS **under active development**, designed for cafés and restaurants in Morocco. Phase 1 foundation is verified; Phase 2 identity and restaurant tenancy is implemented on a draft pull request and subject to final acceptance testing. This is not a production deployment.
 
-## What exists
+## Implemented features
 
-- Laravel 13 REST API with public `GET /api/v1/health` and `GET /api/v1/ready` (PostgreSQL probe).
-- React 19 + TypeScript strict + Vite 8 + Tailwind v4, real API status query, loading/error/retry states, FR/AR/EN UI and Arabic RTL.
-- PostgreSQL 17, PHP-FPM, Nginx and Vite local Docker Compose configuration.
-- API and component test sources, offline unit tests and GitHub Actions CI.
-- No registration, tenant isolation, billing, menu management or ordering is implemented.
+- Laravel 13 REST API, PostgreSQL 17, first-party session authentication with Sanctum, secure password hashing, CSRF defense, registration/login/logout, reset links, signed email verification, and session revocation after reset.
+- Restaurant creation, selection, memberships, Owner/Manager/Waiter/Kitchen Staff/Menu Editor roles, explicit platform Super Admin, policies and scoped tenant resolution.
+- React 19 + strict TypeScript, Vite 8, Tailwind v4 and React Router. Login, registration, password reset, verification, protected dashboard, restaurant selection and staff management.
+- FR/AR/EN foundation shell and RTL support. Authentication/dashboard copy is currently English and will need localization review before a multilingual release.
+- PostgreSQL-backed feature/security tests, frontend component/API tests, Docker Compose smoke tests and GitHub Actions CI.
 
-**Milestone incomplete:** dependency installation, lockfiles, Laravel integration tests, React build and PostgreSQL migrations have not been verified. Do not proceed to Phase 2 before these are passing. See [milestone report](docs/milestone-1.md).
+**Not implemented:** QR menus, product catalogs, billing, order workflows or production mail delivery. These are not simulated. Do not start Phase 3 until Phase 2 acceptance passes.
 
 ## Local development
 
-Requires Docker with Compose. Or PHP 8.3+ + Composer 2 + PostgreSQL 17 + Node.js 22.12+.
+Requirements: Docker and Compose. Ports `5173`, `8000`, and `5432` must be available on loopback.
 
 ```bash
 cp apps/api/.env.example apps/api/.env
-# Configure a local-only POSTGRES_PASSWORD and match DB_PASSWORD.
-docker compose up --build
-docker compose exec api php artisan migrate
+# Configure a local-only POSTGRES_PASSWORD for postgres, and match DB_PASSWORD.
+# Never use the example password in a public environment.
+docker compose up --build -d
+docker compose exec api php artisan migrate --force
 ```
 
 Frontend: http://localhost:5173
 
 API liveness: http://localhost:8000/api/v1/health
 
-Database readiness: http://localhost:8000/api/v1/ready
+API readiness: http://localhost:8000/api/v1/ready
 
-The stack is local-only and uses example credentials. Do not use these in production.
+Authentication screens: `/register`, `/login`, `/forgot-password`, `/reset-password`, `/verify-email`, and protected `/dashboard`.
 
-## Tests
+The frontend proxies `/api` and `/sanctum` through Vite, allowing `SameSite=Lax` first-party browser cookies. To register and sign in, use the frontend forms; the API requires a CSRF cookie before mutations. Passwords must be at least 12 characters with uppercase, lowercase and numbers.
+
+**Development mail:** `MAIL_MAILER=log` writes verification and reset messages to the API container logs; it does not deliver real email. For live delivery, configure SMTP through private environment variables. You will need `FRONTEND_URL` pointing to the frontend's public origin for password reset and verification redirects.
+
+## Run tests
 
 ```bash
 npm run test:offline
-php tools/tests/php_health_controller_smoke.php
-cd apps/web && npm install && npm run lint && npm run typecheck && npm test && npm run build
-cd ../api && composer install && vendor/bin/pint --test && php artisan test
+cd apps/web
+npm ci --legacy-peer-deps --no-audit --no-fund
+npm run lint && npm run typecheck && npm test && npm run build
+cd ../api
+composer install --no-interaction --prefer-dist
+vendor/bin/pint --test
+php artisan migrate --force
+php artisan test
 ```
 
-Lockfiles are intentionally not fabricated: `apps/web/package-lock.json` and `apps/api/composer.lock` must be generated with package registry access, then committed. Until then CI installs are non-reproducible.
+On disposable GitHub Actions runners, the workflow also executes `tools/tests/phase1-compose-smoke.sh` and `tools/tests/phase2-compose-smoke.sh`. The latter deliberately removes its isolated Compose volumes. Do not run it on a machine with persistent data.
 
-## Project layout
+Both npm and Composer lockfiles are committed for reproducible dependency selection. The Docker web service also uses `npm ci`.
+
+## Repository
 
 ```text
-apps/api/    Laravel REST API, user migration, health endpoints
-apps/web/    React UI and health client
-infra/       Docker and Nginx local configuration
-.github/     CI workflow
-tools/tests/ Dependency-free test harnesses
-docs/        Architecture, security, testing, decisions and milestone report
+apps/api/    Laravel API, models, migrations, policies, middleware, feature tests
+apps/web/    React Router SPA, auth client, screens, component/API tests
+infra/       Docker and Nginx local development infrastructure
+.github/     GitHub Actions lint/build/test and Compose integration
+tools/tests/ Offline and isolated integration smoke checks
+docs/        API contract, decisions, security and milestone reports
 ```
 
-Read [architecture](docs/architecture.md), [API](docs/api.md), [security](docs/security.md), [testing](docs/testing.md), [design system](docs/design-system.md), and [deployment](docs/deployment.md).
+Read the [v1 API contract](docs/api.md), [security posture](docs/security.md), [tenancy architecture](docs/decisions/0002-identity-tenancy.md), [testing](docs/testing.md) and [deployment limitations](docs/deployment.md).

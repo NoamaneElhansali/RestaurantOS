@@ -1,24 +1,34 @@
-# Tests and validation
+# RestaurantOS CI and test strategy
 
-## Verified offline (2026-11-04)
+Run the following commands against the exact branch being accepted.
 
-- `npm run test:offline`: 11/11 tests passed using Node 22.16.0, with no package installation.
-- `php tools/tests/php_health_controller_smoke.php`: 5 controller assertions passed using response/DB test doubles.
-- PHP syntax check: 23 local PHP source files passed `php -l`.
-- The standalone TypeScript API client passed strict type-checking, and initial JSON/YAML source files parsed.
-- These results apply to the locally authored foundation; they are not GitHub Actions or framework integration results.
+## Framework and frontend
 
-## Tests authored but not yet executed with dependencies
+```bash
+cd apps/api
+composer install --no-interaction --prefer-dist
+vendor/bin/pint --test
+php artisan migrate --force
+php artisan test
 
-- Laravel HTTP tests at `apps/api/tests/Feature/HealthEndpointsTest.php`.
-- React Testing Library status component tests.
-- GitHub Actions CI jobs with PostgreSQL 17 service.
+cd ../web
+npm ci --legacy-peer-deps --no-audit --no-fund
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
 
-## Required release gates
+The API tests cover registration, duplicate/weak credentials, bad login, logout, password broker reset, session revocation, invalid reset tokens, signed verification, verified-only tenant access, tenant switching, last-owner invariants, role restrictions, horizontal IDOR, nested membership IDOR, and Super Admin isolation. Frontend tests cover health status, first-party cookie and XSRF handling, HTTP validation errors, and protected-route access.
 
-1. Install npm and Composer packages, commit generated lockfiles, use `npm ci`.
-2. Run `npm run lint && npm run typecheck && npm test && npm run build` from apps/web.
-3. Run `vendor/bin/pint --test && php artisan migrate --force && php artisan test` from apps/api against disposable PostgreSQL.
-4. Run `docker compose config`, `docker compose up --build`, API liveness and DB readiness smoke probes, and a database-outage/recovery test.
+## Docker integration
 
-**No milestone approval** until checks pass. Containerized end-to-end integration has not been run.
+`tools/tests/phase1-compose-smoke.sh` tests the real Nginx/PHP/PostgreSQL/Vite stack including migrations, rollback, live/ready endpoints, database shutdown and recovery.
+
+`tools/tests/phase2-compose-smoke.sh` uses an isolated disposable Compose project and tests HTTP registration with CSRF rejection, valid CSRF registration, verified-email restrictions, login and logout. **Destructive script; CI=true and isolated volumes required.**
+
+GitHub Actions executes independent `web`, `api`, `offline`, `compose-smoke`, and `phase2-compose-smoke` jobs. The GitHub Actions run URL and result are authoritative; do not claim a job passed until GitHub reports success.
+
+## Remaining production verification
+
+A staging SMTP transport, real browser E2E tests, structured audit-log review, secure HTTPS deployment, and independent penetration testing must be performed before production release.
