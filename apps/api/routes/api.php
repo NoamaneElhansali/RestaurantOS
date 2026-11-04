@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\EmailVerificationController;
+use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\PlatformController;
 use App\Http\Controllers\Api\V1\RestaurantController;
 use App\Http\Controllers\Api\V1\RestaurantMemberController;
-use App\Http\Controllers\Api\V1\EmailVerificationController;
-use App\Http\Controllers\Api\V1\PlatformController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {

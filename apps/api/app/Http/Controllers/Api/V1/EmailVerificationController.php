@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,9 +11,7 @@ class EmailVerificationController extends Controller
 {
     public function verify(EmailVerificationRequest $request): JsonResponse
     {
-        if ($request->fulfill()) {
-            // fulfill dispatches the framework's Verified event.
-        }
+        $request->fulfill();
 
         return response()->json(['message' => 'Email verified.']);
     }
