@@ -24,6 +24,7 @@ class AuthController extends Controller
         event(new Registered($user));
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+        $request->session()->put('auth_session_version', (int) $user->session_version);
 
         return response()->json(['user' => $this->serializeUser($user)], 201);
     }
@@ -35,6 +36,7 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => ['Invalid credentials.']]);
         }
         $request->session()->regenerate();
+        $request->session()->put('auth_session_version', (int) $request->user()->session_version);
 
         return response()->json(['user' => $this->serializeUser($request->user())]);
     }
@@ -71,7 +73,7 @@ class AuthController extends Controller
         ]);
 
         $status = Password::reset($data, function (User $user, string $password): void {
-            $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
+            $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60), 'session_version' => $user->session_version + 1])->save();
         });
 
         if ($status !== Password::PASSWORD_RESET) {
