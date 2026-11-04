@@ -1,4 +1,6 @@
+
 name: restaurantos
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -34,7 +36,8 @@ services:
       DB_USERNAME: restaurantos
       DB_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-only-change-me}
     depends_on:
-      postgres: {condition: service_healthy}
+      postgres:
+        condition: service_healthy
     command: ["sh", "/opt/restaurantos/start-api.sh"]
 
   nginx:
@@ -48,7 +51,9 @@ services:
       - api
 
   web:
-    image: node:22-alpine
+    build:
+      context: .
+      dockerfile: infra/docker/web/Dockerfile
     working_dir: /workspace
     environment:
       API_PROXY_TARGET: http://nginx:80
@@ -57,7 +62,10 @@ services:
       - web_modules:/workspace/node_modules
     ports:
       - "127.0.0.1:5173:5173"
-    command: ["sh", "-c", "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"]
+    command:
+      - sh
+      - -c
+      - npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0
     depends_on:
       - nginx
 
