@@ -1,0 +1,16 @@
+{
+  "name": "restaurantos",
+  "private": true,
+  "version": "0.1.0",
+  "description": "RestaurantOS modular SaaS monorepo",
+  "scripts": {
+    "test:offline": "node --experimental-strip-types --test apps/web/src/lib/health.test.ts tools/tests/foundation.test.mjs",
+    "web:dev": "npm --prefix apps/web run dev",
+    "web:build": "npm --prefix apps/web run build",
+    "web:test": "npm --prefix apps/web run test",
+    "api:test": "cd apps/api && php artisan test"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

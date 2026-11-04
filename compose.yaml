@@ -1,0 +1,66 @@
+name: restaurantos
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: restaurantos
+      POSTGRES_USER: restaurantos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-only-change-me}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U restaurantos -d restaurantos"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - ./apps/api:/var/www/html
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: restaurantos
+      DB_USERNAME: restaurantos
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-only-change-me}
+    depends_on:
+      postgres: {condition: service_healthy}
+    command: ["sh", "/opt/restaurantos/start-api.sh"]
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "127.0.0.1:8000:80"
+    volumes:
+      - ./infra/nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./apps/api/public:/var/www/html/public:ro
+    depends_on:
+      - api
+
+  web:
+    image: node:22-alpine
+    working_dir: /workspace
+    environment:
+      API_PROXY_TARGET: http://nginx:80
+    volumes:
+      - ./apps/web:/workspace
+      - web_modules:/workspace/node_modules
+    ports:
+      - "127.0.0.1:5173:5173"
+    command: ["sh", "-c", "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"]
+    depends_on:
+      - nginx
+
+volumes:
+  pg_data:
+  web_modules:
