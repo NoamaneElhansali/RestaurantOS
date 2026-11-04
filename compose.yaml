@@ -65,7 +65,7 @@ services:
     command:
       - sh
       - -c
-      - npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0
+      - npm ci --legacy-peer-deps --no-audit --no-fund && npm run dev -- --host 0.0.0.0
     depends_on:
       - nginx
 
