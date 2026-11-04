@@ -9,7 +9,7 @@ export function App() {
   const { t, i18n } = useTranslation();
   const health = useQuery({
     queryKey: ['api-health', 'v1'],
-    queryFn: getApiHealth,
+    queryFn: () => getApiHealth(),
     retry: 1,
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
