@@ -53,6 +53,21 @@ register='{"name":"Docker Test","email":"docker-identity@example.test","password
 
 post_json() {
   local path="$1" data="$2" csrf="${3:-true}"
+  if [[ "$csrf" == "true" ]]; then
+    check_status 204 /sanctum/csrf-cookie
+    token=$(python3 - "$jar" <<'PY'
+import sys
+from urllib.parse import unquote
+for line in open(sys.argv[1], encoding='utf-8'):
+    parts = line.strip().split('\\t')
+    if len(parts) == 7 and parts[5] == 'XSRF-TOKEN':
+        print(unquote(parts[6]))
+        break
+else:
+    raise SystemExit('CSRF cookie missing')
+PY
+)
+  fi
   args=(--silent --show-error --cookie "$jar" --cookie-jar "$jar" --output "$body" --write-out '%{http_code}' -X POST -H "Content-Type: application/json" -H "Accept: application/json" -d "$data")
   if [[ "$csrf" == "true" ]]; then args+=(-H "X-XSRF-TOKEN: $token"); fi
   curl "${args[@]}" "http://127.0.0.1:8000$path"
