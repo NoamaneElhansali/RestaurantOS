@@ -12,7 +12,7 @@ class ValidateSessionVersion
     public function handle(Request $request, Closure $next): Response
     {
         // Even a still-valid Laravel session cannot outlive a password reset.
-        if ($request->session()->get('auth_session_version') !== (int) $request->user()->session_version) {
+        if ($request->session()->get('auth_session_version') !== (int) $request->user()->fresh()->session_version) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
