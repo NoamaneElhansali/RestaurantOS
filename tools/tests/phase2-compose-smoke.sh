@@ -21,8 +21,6 @@ trap cleanup EXIT
 
 "${compose[@]}" config -q
 "${compose[@]}" up --build -d
-"${compose[@]}" exec -T api php artisan migrate --force
-
 check_status() {
   local expected="$1" path="$2" attempts="${3:-25}"
   for ((i = 0; i < attempts; i++)); do
@@ -35,6 +33,7 @@ check_status() {
 }
 
 check_status 200 /api/v1/health 45
+"${compose[@]}" exec -T api php artisan migrate --force
 check_status 401 /api/v1/auth/me
 
 check_status 204 /sanctum/csrf-cookie
