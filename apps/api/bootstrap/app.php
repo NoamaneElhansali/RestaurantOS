@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Middleware\ResolveRestaurantTenant;
 use App\Http\Middleware\RequireVerifiedEmail;
+use App\Http\Middleware\ResolveRestaurantTenant;
 use App\Http\Middleware\ValidateSessionVersion;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
