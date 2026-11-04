@@ -24,6 +24,7 @@ class HealthController extends Controller
             DB::select('SELECT 1');
         } catch (Throwable $exception) {
             report($exception);
+
             return response()->json([
                 'service' => 'restaurantos-api',
                 'status' => 'unavailable',
