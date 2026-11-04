@@ -109,6 +109,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 }
 
 export function VerifyEmailPage() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user, pending, refresh } = useAuth();
